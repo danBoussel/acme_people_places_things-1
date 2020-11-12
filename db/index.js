@@ -5,58 +5,58 @@ const {STRING, INTEGER, DATE} = Sequelize;
 
 const db = new Sequelize(process.env.DATABASE_URL || 'postgres://localhost/ppp_db');
 
-const People = db.define('People',{
-    person: STRING
+const Person = db.define('person',{
+    name: {
+      type: STRING,
+      allowNull: false
+    }
 });
-const Places = db.define('Places',{
-    place: STRING
+const Place = db.define('place',{
+    name: {
+      type: STRING,
+      allowNull: false
+    }
 });
-const Things = db.define('Things',{
-    thing: STRING
+const Thing = db.define('thing',{
+    name: {
+      type: STRING,
+      allowNull: false
+    }
 });
-const Purchases = db.define('Purchases',{
-    number: INTEGER,
+const Purchase = db.define('purchase',{
+    count: {
+      type: INTEGER,
+      defaultValue: 5
+    },
     date: DATE
 
 })
 
+Purchase.belongsTo(Person);
 
-// Things.belongsTo(People);
-// People.hasMany(Things);
+Purchase.belongsTo(Thing);
 
-// Places.hasMany(Things);
-// Things.belongsTo(Places);
-
-//Places.belongsTo(People);
-//People.hasMany(Places);
-
-Purchases.belongsTo(People);
-People.hasMany(Purchases);
-
-Things.hasMany(Purchases);
-Purchases.belongsTo(Things);
-
-Places.hasMany(Purchases);
-Purchases.belongsTo(Places);
+Purchase.belongsTo(Place);
 
 
 const syncAndSeed = async()=>{
+  //TODO - use Promise.all
     await db.sync({force:true});
-    await People.create({person: 'moe'});
-    await People.create({person: 'lucy'});
-    await People.create({person: 'lary'});
+    const moe = await Person.create({name: 'moe'});
+    await Person.create({name: 'lucy'});
+    await Person.create({name: 'lary'});
 
-    await Places.create({place: 'NYC'});
-    await Places.create({place: 'Chicago'});
-    await Places.create({place: 'LA'});
-    await Places.create({place: 'Dallas'});
+    const nyc = await Place.create({name: 'NYC'});
+    await Place.create({name: 'Chicago'});
+    await Place.create({name: 'LA'});
+    await Place.create({name: 'Dallas'});
 
-    await Things.create({thing: 'foo'});
-    await Things.create({thing: 'bar'});
-    await Things.create({thing: 'bazz'});
-    await Things.create({thing: 'qua'});
+    const foo = await Thing.create({name: 'foo'});
+    await Thing.create({name: 'bar'});
+    await Thing.create({name: 'bazz'});
+    await Thing.create({name: 'qua'});
 
-    await Purchases.create({number: 3,date: new Date()});
+    await Purchase.create({ personId: moe.id, placeId: nyc.id, thingId: foo.id, number: 3,date: new Date()});
     
 }
 
@@ -65,8 +65,8 @@ const syncAndSeed = async()=>{
 module.exports = {
     syncAndSeed,
     db,
-    People,
-    Places,
-    Things,
-    Purchases
+    Person,
+    Place,
+    Thing,
+    Purchase
 }

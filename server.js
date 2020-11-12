@@ -1,72 +1,91 @@
 const pg = require('pg');
 const express = require('express');
 const app = express();
-const {syncAndSeed, db, People, Places, Things, Purchases} = require('./db')
+const {syncAndSeed, db, Person, Place, Thing, Purchase} = require('./db')
 
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 
 app.get('/',async(req,res,next)=>{
-    const people = await People.findAll();
-    const places = await Places.findAll();
-    const things = await Things.findAll();
-    const purchases = await Purchases.findAll({
-        include:[People]
+  try {
+    const people = await Person.findAll();
+    const places = await Place.findAll();
+    const things = await Thing.findAll();
+    const purchases = await Purchase.findAll({
+        include:[Person, Place, Thing]
     });
-    console.log(purchases);
 
-    // console.log(people);
 
     res.send(`
-        <html>
+      <html>
         <head>
+        <style>
+        form {
+          display: flex;
+          flex-direction: column;
+        }
+        form > * {
+          margin: 0.5rem;
+        }
+        </style>
         </head>
         <body>
-        <h1>Purchase</h1>
-        <form method = 'POST'>
-            <select name="PersonId">
-                ${
-                    people.map((person)=>`
-                        <option value='PersonId'>${person.person}</option>
-                    `)
-                }
+          <h1>Purchase</h1>
+          <form method = 'POST'>
+            <select name="personId">
+              ${
+                  people.map((person)=>`
+                      <option value='${ person.id }'>${person.name}</option>
+                  `).join('')
+              }
+            </select>
+            <select name="thingId">
+              ${
+                  things.map( thing =>`
+                      <option value='${ thing.id }'>${thing.name}</option>
+                  `).join('')
+              }
             </select>
 
-            <select name="ThingId">
-                ${
-                    things.map((thing)=>`
-                        <option>${thing.thing}</option>
-                    `)
-                }
-            </select>
-
-            <select name="place">
-                ${
-                    places.map((place)=>`
-                        <option>${place.place}</option>
-                    `)
-                }
+            <select name="placeId">
+              ${
+                  places.map((place)=>`
+                      <option value='${ place.id }'>${place.name}</option>
+                  `).join('')
+              }
             </select>
             <input type = 'text' name='count' />
+            <input type = 'text' name='date' />
 
             <button>save</button>
-            <h1>Purchases</h1>
+          </form>
+            <h1>Purchase</h1>
             ${
                 purchases.map((purchase)=>`
-                    <p>${purchase.person} purchased ${purchase.thing}</p>
-                `)
+                    <p>
+                      ${purchase.person.name} purchased ${purchase.thing.name} (${purchase.count})
+                      @ ${ purchase.place.name }
+                      on ${ purchase.date }
+                    </p>
+                `).join('')
             }
-        </form>
         </body>
-    
-    
-    `);
+      </html>
+  `);
+  }
+  catch(ex){
+    next(ex);
+  }
 })
 
 app.post('/', async(req,res,next)=>{
-    const purchase = await Purchases.create(req.body);
+  try {
+    const purchase = await Purchase.create(req.body);
     res.redirect('/');
-    //res.send(req.body);
+  }
+  catch(ex){
+    next(ex);
+  }
 
 });
 
